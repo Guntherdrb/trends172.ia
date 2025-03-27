@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>trends172.ia</title>
+</head>
+<body>
+  <h1>Sube tu imagen y descripción</h1>
+  <form id="formulario">
+    <input type="file" name="imagen" required><br><br>
+    <textarea name="descripcion" placeholder="Describe el espacio..." rows="5" cols="40" required></textarea><br><br>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div id="resultado"></div>
+
+  <script>
+    const form = document.getElementById('formulario');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const response = await fetch('http://localhost:3000/api/asesoramiento', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+
+      resultado.innerHTML = '<h2>Productos sugeridos:</h2>' + 
+        data.productos.map(p => `<p><strong>${p.nombre}</strong>: ${p.descripcion} - $${p.precio}</p>`).join('') +
+        `<p><strong>Total:</strong> $${data.total}</p>`;
+    });
+  </script>
+</body>
+</html>
