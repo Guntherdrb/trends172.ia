@@ -2,49 +2,82 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Asesoramiento de Cocina con IA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asistente Trends172.IA</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    form {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      align-items: center;
+      margin: 0;
     }
-
+    .contenedor {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      margin-top: 40px;
+    }
+    h1 {
+      color: #c7001a;
+      text-align: center;
+    }
+    label, textarea, input[type="file"] {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+    }
     textarea {
-      resize: vertical;
-      min-height: 80px;
+      height: 100px;
+      resize: none;
+      padding: 10px;
     }
-
-    #resultado {
+    button {
+      background-color: #c7001a;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      margin-top: 20px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .resultado {
       margin-top: 30px;
-      background: #f4f4f4;
-      padding: 15px;
+      background-color: #f8f8f8;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .pregunta-herrajes {
+      background-color: #444;
+      color: white;
+      padding: 10px;
       border-radius: 8px;
+      text-align: center;
+      margin-top: 15px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>Sube tu imagen y descripción</h1>
+  <div class="contenedor">
+    <h1>Asistente de Diseño Trends172.IA</h1>
+    <form id="formulario">
+      <label>Sube una imagen del espacio actual:</label>
+      <input type="file" name="imagen" accept="image/*" required />
 
-  <form id="formulario" enctype="multipart/form-data">
-    <input type="file" name="imagen" required />
-    <textarea name="descripcion" placeholder="Describe cómo quieres tu cocina..." required></textarea>
-    <button type="submit">Enviar</button>
-  </form>
+      <label>Describe lo que deseas cambiar o diseñar:</label>
+      <textarea name="descripcion" placeholder="Ejemplo: cambiar el piso por porcelanato claro, cocina estilo minimalista, colores gris y madera clara..." required></textarea>
 
-  <div id="resultado"></div>
+      <button type="submit">Obtener asesoramiento</button>
+    </form>
+
+    <div class="resultado" id="resultado"></div>
+  </div>
 
   <script>
     const form = document.getElementById('formulario');
@@ -52,21 +85,31 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      resultado.innerHTML = '⏳ Procesando tu solicitud...';
 
       const formData = new FormData(form);
 
       try {
-        const response = await fetch('https://trends172-ia.onrender.com/api/asesoramiento', {
+        const response = await fetch('https://trends172-backend.onrender.com/api/asesoramiento', {
           method: 'POST',
           body: formData
         });
 
-        if (!response.ok) {
-          throw new Error("Error en la respuesta del servidor");
-        }
-
         const data = await response.json();
 
         resultado.innerHTML = `
-          <h2>Productos sugeridos:</h2>
-          ${data.productos
+          <h3>🔑 Recomendación:</h3>
+          <p>${data.recomendacion}</p>
+          <h3>🖼️ Imagen generada:</h3>
+          <img src="${data.imagen}" alt="Diseño generado por IA" style="width:100%; border-radius:10px;" />
+          <div class="pregunta-herrajes" onclick="alert('Aquí se conectará con el asistente de herrajes.')">
+            ¿Te gustaría saber qué herrajes necesitas para fabricar este mobiliario?
+          </div>
+        `;
+      } catch (error) {
+        resultado.innerHTML = '❌ Hubo un error al obtener el asesoramiento. Intenta nuevamente.';
+      }
+    });
+  </script>
+</body>
+</html>
