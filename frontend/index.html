@@ -1,14 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>trends172.ia</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Asesoramiento de Cocina con IA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    #resultado {
+      margin-top: 30px;
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
   <h1>Sube tu imagen y descripción</h1>
-  <form id="formulario">
-    <input type="file" name="imagen" required><br><br>
-    <textarea name="descripcion" placeholder="Describe el espacio..." rows="5" cols="40" required></textarea><br><br>
+
+  <form id="formulario" enctype="multipart/form-data">
+    <input type="file" name="imagen" required />
+    <textarea name="descripcion" placeholder="Describe cómo quieres tu cocina..." required></textarea>
     <button type="submit">Enviar</button>
   </form>
 
@@ -20,17 +52,21 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData(form);
-      const response = await fetch('http://localhost:3000/api/asesoramiento', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await response.json();
 
-      resultado.innerHTML = '<h2>Productos sugeridos:</h2>' + 
-        data.productos.map(p => `<p><strong>${p.nombre}</strong>: ${p.descripcion} - $${p.precio}</p>`).join('') +
-        `<p><strong>Total:</strong> $${data.total}</p>`;
-    });
-  </script>
-</body>
-</html>
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('https://trends172-ia.onrender.com/api/asesoramiento', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error("Error en la respuesta del servidor");
+        }
+
+        const data = await response.json();
+
+        resultado.innerHTML = `
+          <h2>Productos sugeridos:</h2>
+          ${data.productos

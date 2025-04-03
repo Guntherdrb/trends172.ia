@@ -1,29 +1,47 @@
 const express = require('express');
-const multer = require('multer');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-
+const multer = require('multer');
 const app = express();
-const upload = multer();
 
+// Configurar CORS para permitir peticiones desde cualquier origen
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
-    const descripcion = req.body.descripcion;
+// Configurar Multer para recibir archivos
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
-    const respuestaSimulada = {
-        productos: [
-            { nombre: "Encimera de cuarzo", precio: 120, descripcion: "Ideal para cocinas modernas." },
-            { nombre: "Piso vinílico gris", precio: 25, descripcion: "Antideslizante y resistente al agua." }
-        ],
-        total: 145
-    };
-
-    res.json(respuestaSimulada);
+// Endpoint de prueba
+app.get('/', (req, res) => {
+  res.send('Servidor Trends172.IA activo y escuchando 👌');
 });
 
-app.listen(3000, () => {
-    console.log('Servidor corriendo en http://localhost:3000');
+// Ruta POST para recibir imagen + descripción
+app.post('/api/asesoramiento', upload.single('imagen'), (req, res) => {
+  const descripcion = req.body.descripcion;
+  const imagen = req.file;
+
+  console.log('📝 Descripción recibida:', descripcion);
+  console.log('🖼️ Imagen recibida:', imagen?.originalname);
+
+  // 🔮 Aquí más adelante integrarás OpenAI para análisis real
+
+  // Simulación de asesoramiento con productos
+  const productos = [
+    { nombre: 'Encimera Blanca Cuarzo', descripcion: 'Superficie de cuarzo pulido de alta resistencia', precio: 250 },
+    { nombre: 'Piso Vinílico Gris Claro', descripcion: 'Antideslizante e impermeable', precio: 180 },
+    { nombre: 'Gabinetes Alto Brillo Blanco', descripcion: 'Gabinetes modernos estilo europeo', precio: 320 }
+  ];
+
+  const total = productos.reduce((acc, p) => acc + p.precio, 0);
+
+  res.json({
+    productos,
+    total
+  });
+});
+
+// Puerto dinámico para Render o 3000 local
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
 });
