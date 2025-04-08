@@ -1,73 +1,72 @@
 const express = require('express');
-const cors = require('cors');
 const multer = require('multer');
+const cors = require('cors');
+const path = require('path');
+const { config } = require('dotenv');
 const { OpenAI } = require('openai');
-require('dotenv').config();
+
+config(); // Cargar variables de entorno
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Middleware
 app.use(cors());
+app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.json());
 
-// Configurar subida de imágenes
+// Configuración de Multer (aunque no se guarda la imagen)
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-// Inicializar OpenAI con tu API Key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const upload = multer({ storage });
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.send('🟢 Servidor Trends172.IA activo y escuchando');
+  res.send('🟢 Servidor Trends172.IA activo y escuchando 👌');
 });
 
-// Ruta de asesoramiento con imagen + descripción
+// Ruta principal para asesoramiento
 app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
   const descripcion = req.body.descripcion;
 
   try {
-    // Paso 1: Generar recomendación de diseño con ChatGPT
-    const chatResponse = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'Eres un asesor profesional en diseño interior especializado en cocinas modernas. Da recomendaciones de materiales, colores y estilo según la solicitud del usuario.'
-        },
-        {
-          role: 'user',
-          content: `Tengo esta imagen de mi espacio. Lo que quiero cambiar o decorar es lo siguiente: ${descripcion}`
-        }
-      ]
-    });
+    console.log(`🎨 Generando imagen para: ${descripcion}`);
 
-    const textoAsesor = chatResponse.choices[0].message.content;
-
-    // Paso 2: Generar imagen con DALL·E
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-2",
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
       prompt: descripcion,
       n: 1,
-      size: "512x512"
+      size: '1024x1024',
+      response_format: 'b64_json', // base64
     });
 
-    const imageUrl = imageResponse.data[0].url;
+    const base64 = response.data[0]?.b64_json;
 
-    // Respuesta al frontend
+    if (!base64) {
+      console.error('⚠️ No se recibió base64 de OpenAI.');
+      return res.status(500).json({ mensaje: 'No se generó la imagen.' });
+    }
+
+    console.log('✅ Imagen generada correctamente.');
+    console.log('📦 Respuesta de DALL·E (inicio):', base64.substring(0, 100) + '...');
+
+    const imageData = `data:image/png;base64,${base64}`;
+
     res.json({
-      recomendacion: textoAsesor,
-      imagen: imageUrl
+      recomendacion: 'Aquí se generará una recomendación futura.',
+      imagen: imageData,
     });
 
   } catch (error) {
-    console.error('❌ Error con OpenAI:', error);
-    res.status(500).json({ error: 'Hubo un problema al procesar la solicitud con OpenAI.' });
+    console.error('❌ Error generando imagen:', error.message);
+    res.status(500).json({ mensaje: 'Error generando imagen o recomendación.' });
   }
 });
 
-// Iniciar servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor Trends172.IA escuchando en el puerto ${PORT}`);
+app.listen(port, () => {
+  console.log(`🟢 Servidor Trends172.IA activo en http://localhost:${port}`);
+  console.log(`🔐 API Key cargada: ✅ ${!!process.env.OPENAI_API_KEY ? 'CARGADA' : 'NO CARGADA'}`);
 });
