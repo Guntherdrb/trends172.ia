@@ -40,10 +40,14 @@ app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
       prompt: descripcion,
       n: 1,
       size: '1024x1024',
-      response_format: 'b64_json', // base64
+      response_format: 'b64_json',
     });
 
-    const base64 = response.data[0]?.b64_json;
+    // 🔍 Mostrar TODA la respuesta en consola para depuración
+    console.log('📥 Respuesta completa de OpenAI:');
+    console.dir(response, { depth: null });
+
+    const base64 = response.data?.[0]?.b64_json;
 
     if (!base64) {
       console.error('⚠️ No se recibió base64 de OpenAI.');
@@ -51,7 +55,7 @@ app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
     }
 
     console.log('✅ Imagen generada correctamente.');
-    console.log('📦 Respuesta de DALL·E (inicio):', base64.substring(0, 100) + '...');
+    console.log('📦 Fragmento del base64:', base64.substring(0, 100) + '...');
 
     const imageData = `data:image/png;base64,${base64}`;
 
