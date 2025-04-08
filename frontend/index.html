@@ -149,39 +149,33 @@
     const loading = document.getElementById('loading');
     const linkDescarga = document.getElementById('descargar');
     const contenedorDescarga = document.getElementById('descargar-contenedor');
-  
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       resultado.style.display = 'none';
       loading.style.display = 'block';
-  
+
       const formData = new FormData(form);
-  
+
       try {
-        const response = await fetch('https://trends172-backend.onrender.com/api/asesoramiento', {
+        const response = await fetch('https://trends172-backend-production.up.railway.app/api/asesoramiento', {
           method: 'POST',
           body: formData
         });
-  
+
         const data = await response.json();
-  
-        console.log('📦 Respuesta completa del backend:', data);
-        console.log('🖼️ Valor de data.imagen:', data.imagen);
-  
         recomendacion.textContent = data.recomendacion || 'No se pudo generar una recomendación.';
         imagenGenerada.src = data.imagen;
         linkDescarga.href = data.imagen;
-  
+
         resultado.style.display = 'block';
         contenedorDescarga.style.display = 'block';
       } catch (err) {
         recomendacion.textContent = 'Error al generar la recomendación o imagen.';
-        console.error('❌ Error de conexión con el servidor o formato inválido:', err);
       } finally {
         loading.style.display = 'none';
       }
     });
   </script>
-  
 </body>
 </html>
