@@ -5,7 +5,7 @@ const path = require('path');
 const { config } = require('dotenv');
 const { OpenAI } = require('openai');
 
-config(); // Cargar variables de entorno
+config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,28 +14,33 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware
+// Middlewares
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use(express.json());
 
-// Configuración de Multer (aunque no se guarda la imagen)
+// Configurar Multer
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
-// Ruta de prueba
+// Ruta principal
 app.get('/', (req, res) => {
   res.send('🟢 Servidor Trends172.IA activo y escuchando 👌');
 });
 
-// Ruta principal para asesoramiento
+// Ruta POST que genera la imagen
 app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
   const descripcion = req.body.descripcion;
 
-  try {
-    console.log(`🎨 Generando imagen para: ${descripcion}`);
+  console.log('📨 Descripción recibida:', descripcion);
+  if (req.file) {
+    console.log('🖼️ Imagen recibida:', req.file.originalname);
+  }
 
-    const response = await openai.images.generate({
+  try {
+    console.log('🎯 Llamando a OpenAI para generar imagen...');
+
+    const imageResponse = await openai.images.generate({
       model: 'dall-e-3',
       prompt: descripcion,
       n: 1,
@@ -43,33 +48,28 @@ app.post('/api/asesoramiento', upload.single('imagen'), async (req, res) => {
       response_format: 'b64_json',
     });
 
-    // 🔍 Mostrar TODA la respuesta en consola para depuración
-    console.log('📥 Respuesta completa de OpenAI:');
-    console.dir(response, { depth: null });
+    console.log('📥 Respuesta completa de OpenAI:', imageResponse);
 
-    const base64 = response.data?.[0]?.b64_json;
+    const base64 = imageResponse.data[0]?.b64_json;
 
     if (!base64) {
-      console.error('⚠️ No se recibió base64 de OpenAI.');
-      return res.status(500).json({ mensaje: 'No se generó la imagen.' });
+      console.error('❌ No se recibió imagen desde OpenAI.');
+      return res.status(500).json({ mensaje: 'No se recibió imagen desde OpenAI.' });
     }
 
+    const imageDataUrl = `data:image/png;base64,${base64}`;
+    const recomendacion = 'No se pudo generar una recomendación.';
+
     console.log('✅ Imagen generada correctamente.');
-    console.log('📦 Fragmento del base64:', base64.substring(0, 100) + '...');
-
-    const imageData = `data:image/png;base64,${base64}`;
-
-    res.json({
-      recomendacion: 'Aquí se generará una recomendación futura.',
-      imagen: imageData,
-    });
+    res.json({ recomendacion, imagen: imageDataUrl });
 
   } catch (error) {
-    console.error('❌ Error generando imagen:', error.message);
-    res.status(500).json({ mensaje: 'Error generando imagen o recomendación.' });
+    console.error('❌ Error generando la imagen:', error.message);
+    res.status(500).json({ mensaje: 'Error generando la imagen o recomendación.' });
   }
 });
 
+// Iniciar servidor
 app.listen(port, () => {
   console.log(`🟢 Servidor Trends172.IA activo en http://localhost:${port}`);
   console.log(`🔐 API Key cargada: ✅ ${!!process.env.OPENAI_API_KEY ? 'CARGADA' : 'NO CARGADA'}`);
